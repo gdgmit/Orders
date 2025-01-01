@@ -91,16 +91,8 @@ public class OrdersService {
 
         String qrData = qrDataBuilder.toString();
         System.out.println(qrData);
-
-
-
-
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(qrData, BarcodeFormat.QR_CODE, 400, 400);
-
-
-
-
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
         String qrCodeBase64 = Base64.getEncoder().encodeToString(outputStream.toByteArray());
@@ -139,7 +131,7 @@ public class OrdersService {
         response.put("qrId", qr.getQrId());
         response.put("orderId", qr.getOrder().getOrderId());
         response.put("qrCode", qr.getQrCode());
-        response.put("status", "retrieved");
+        System.out.println(response);
         return response;
     }
 
