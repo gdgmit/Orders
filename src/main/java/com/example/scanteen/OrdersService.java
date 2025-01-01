@@ -78,16 +78,7 @@ public class OrdersService {
         qrDataBuilder.append("OrderID: ").append(order.getOrderId()).append("\n")
                 .append("OrderDate: ").append(order.getOrderDate()).append("\n")
                 .append("Status: ").append(order.getOrderStatus()).append("\n")
-                .append("TotalAmount: ").append(order.getTotalAmount()).append("\n")
-                .append("PaymentStatus: ").append(order.getPaymentStatus()).append("\n")
-                .append("Ordered Items: \n");
 
-        for (OrderItem item : order.getOrderItems()) {
-            qrDataBuilder.append("- ProductID: ").append(item.getProduct().getPrId())
-                    .append(", Quantity: ").append(item.getItemQuantity())
-                    .append(", Price: ").append(item.getItemCurrentPrice())
-                    .append("\n");
-        }
 
         String qrData = qrDataBuilder.toString();
         System.out.println(qrData);
@@ -131,7 +122,6 @@ public class OrdersService {
         response.put("qrId", qr.getQrId());
         response.put("orderId", qr.getOrder().getOrderId());
         response.put("qrCode", qr.getQrCode());
-        System.out.println(response);
         return response;
     }
 
