@@ -5,20 +5,34 @@ import com.example.entities.Entities.OrderStatus;
 import com.example.entities.Entities.Orders;
 import com.example.entities.Entities.User;
 import com.example.entities.Entities.OrderItem;
-import com.example.entities.Entities.User;
+import com.example.entities.Entities.QR;
 import com.example.entities.Entities.Products;
 import com.example.entities.Entities.PaymentStatus;
 import com.example.entities.Entities.TransactionType;
-import com.example.entities.Repositories.OrderItemRepository;
-import com.example.entities.Repositories.OrdersRepository;
-import com.example.entities.Repositories.ProductsRepository;
-import com.example.entities.Repositories.UserRepository;
+import com.example.entities.Repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.swing.*;
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+
+
 
 @Service
 public class OrdersService {
@@ -31,7 +45,8 @@ public class OrdersService {
     private ProductsRepository productsRepository;
     @Autowired
     private OrderItemRepository orderItemRepository;
-
+    @Autowired
+    private QRRepository qrRepository;
     // Delete Order
     public Map<String, Object> deleteOrder(long orderId) {
         Optional<Orders> orderOptional = ordersRepository.findById(orderId);
@@ -52,6 +67,81 @@ public class OrdersService {
         }
     }
 
+
+    // Insert New QR Code
+    public Map<String, Object> insertQRCode(Map<String, Object> qrRequest) throws Exception {
+        Long orderId = Long.valueOf (qrRequest.get("orderId").toString());
+        System.out.println(orderId);
+       // Long orderId = Long.valueOf(payload.get("orderId").toString());
+        Orders order = ordersRepository.findById(orderId).orElseThrow(() -> new Exception("Order not found"));
+        StringBuilder qrDataBuilder = new StringBuilder();
+        qrDataBuilder.append("OrderID: ").append(order.getOrderId()).append("\n")
+                .append("OrderDate: ").append(order.getOrderDate()).append("\n")
+                .append("Status: ").append(order.getOrderStatus()).append("\n")
+                .append("TotalAmount: ").append(order.getTotalAmount()).append("\n")
+                .append("PaymentStatus: ").append(order.getPaymentStatus()).append("\n")
+                .append("Ordered Items: \n");
+
+        for (OrderItem item : order.getOrderItems()) {
+            qrDataBuilder.append("- ProductID: ").append(item.getProduct().getPrId())
+                    .append(", Quantity: ").append(item.getItemQuantity())
+                    .append(", Price: ").append(item.getItemCurrentPrice())
+                    .append("\n");
+        }
+
+        String qrData = qrDataBuilder.toString();
+        System.out.println(qrData);
+
+
+
+
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(qrData, BarcodeFormat.QR_CODE, 400, 400);
+
+
+
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
+        String qrCodeBase64 = Base64.getEncoder().encodeToString(outputStream.toByteArray());
+
+        String folderPath = "C:\\Users\\udhya\\OneDrive\\Desktop\\OpenMITian\\";
+
+        String fileName = "Order_" + orderId + ".png";
+        File qrFile = new File(folderPath);
+
+
+        File imageFile = new File(folderPath + fileName);
+        MatrixToImageWriter.writeToPath(bitMatrix, "PNG", imageFile.toPath());
+        System.out.println("QR Code saved at: " + imageFile.getAbsolutePath());
+        System.out.println("Base64 QR Code Size: " + qrCodeBase64.length());
+        QR qr = new QR();
+        qr.setOrder(order);
+        qr.setQrCode(qrCodeBase64);
+
+        QR savedQR = qrRepository.save(qr);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("qrId", savedQR.getQrId());
+        response.put("qrCode", savedQR.getQrCode());
+        response.put("status", "not-scanned");
+        return response;
+    }
+
+    // Get QR Code by Order ID
+    public Map<String, Object> getQRCodeByOrderId(Long orderId) throws Exception {
+        QR qr = qrRepository.findAll().stream()
+                .filter(qrItem -> qrItem.getOrder().getOrderId().equals(orderId))
+                .findFirst()
+                .orElseThrow(() -> new Exception("QR Code not found for the order"));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("qrId", qr.getQrId());
+        response.put("orderId", qr.getOrder().getOrderId());
+        response.put("qrCode", qr.getQrCode());
+        response.put("status", "retrieved");
+        return response;
+    }
 
     public Map<String, Object> createOrder(Map<String, Object> orderRequest) {
         // Step 1: Create a new order instance

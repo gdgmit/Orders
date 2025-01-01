@@ -26,6 +26,29 @@ public class OrdersController {
         }
     }
 
+
+    // Insert New QR Code
+    @PostMapping("/qr")
+    public ResponseEntity<Map<String, Object>> insertQRCode(@RequestBody Map<String, Object> qrRequest) {
+        try {
+            Map<String, Object> response = ordersService.insertQRCode(qrRequest);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("message", e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Get QR Code by Order ID
+    @GetMapping("/{orderId}/qr")
+    public ResponseEntity<Map<String, Object>> getQRCodeByOrderId(@PathVariable Long orderId) {
+        try {
+            Map<String, Object> qrDetails = ordersService.getQRCodeByOrderId(orderId);
+            return new ResponseEntity<>(qrDetails, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("message", e.getMessage()), HttpStatus.NOT_FOUND);
+        }
+    }
+
     // Create Order
     @PostMapping
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, Object> orderRequest) {
