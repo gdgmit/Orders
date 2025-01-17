@@ -27,6 +27,45 @@ public class OrdersController {
     @Autowired
     private OrdersRepository ordersRepository;
 
+
+    @Autowired
+    private OrdersService ordersService;
+
+
+    // Delete Order
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<Map<String, Object>> deleteOrder(@PathVariable long orderId) {
+        try {
+            Map<String, Object> response = ordersService.deleteOrder(orderId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("message", e.getMessage()), HttpStatus.NOT_FOUND);
+        }
+    }
+    // Insert New QR Code
+    @PostMapping("/qr")
+    public ResponseEntity<Map<String, Object>> insertQRCode(@RequestBody Map<String, Object> qrRequest) {
+        try {
+            Map<String, Object> response = ordersService.insertQRCode(qrRequest);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("message", e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Get QR Code by Order ID
+    @GetMapping("/{orderId}/qr")
+    public ResponseEntity<Map<String, Object>> getQRCodeByOrderId(@PathVariable Long orderId) {
+        try {
+            Map<String, Object> qrDetails = ordersService.getQRCodeByOrderId(orderId);
+            return new ResponseEntity<>(qrDetails, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("message", e.getMessage()), HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+
     // Get all products
     @GetMapping
     public List<Orders> getAllOrders() {
